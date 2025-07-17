@@ -17,7 +17,25 @@ app.use((err, req, res, next) => {
 });
 /* eslint-enable no-unused-vars */
 
+const http = require('http');
+const { Server: WebSocketServer } = require('ws');
+
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws) => {
+  logger.info('WebSocket client connected');
+  ws.on('message', (message) => {
+    logger.info('Received via WS:', message.toString());
+    ws.send(message); // Echo back
+  });
+  ws.on('close', () => {
+    logger.info('WebSocket client disconnected');
+  });
+});
+
+// eslint-disable-next-line no-undef
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  logger.info(`Express server listening on port ${PORT}`);
+server.listen(PORT, () => {
+  logger.info(`Express & WebSocket server listening on port ${PORT}`);
 });

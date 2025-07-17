@@ -7,7 +7,7 @@ Chronological checklist. Mark items with **x** when complete.
 - [x] Basic scaffold: `src/index.js`, logger utility
 - [x] Environment handling: `dotenv`, add `.env.example`
 - [x] Express baseline: app, health‑check route, error handler
-- [ ] WebSocket server: attach `ws`; echo test
+- [x] WebSocket server: attach `ws`; echo test
 - [ ] IRC bridge: integrate `irc-framework`, connect via env
 - [ ] Message mapper: WebSocket ⇄ IRC (join, message, part)
 - [ ] JWT auth: `/auth/login`, token sign/verify, WS upgrade guard
