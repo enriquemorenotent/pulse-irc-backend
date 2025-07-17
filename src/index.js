@@ -29,7 +29,9 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 // IRC client reference for mapping WebSocket <-> IRC
+
 let ircClient = null;
+let ircReady = false; // Tracks if IRC is fully connected and ready
 
 /**
  * Broadcast a message to all connected WebSocket clients
@@ -44,8 +46,14 @@ function broadcastWS(data) {
 }
 
 // Handle new WebSocket client connections
+
 wss.on('connection', (ws) => {
 	logger.info('WebSocket client connected');
+	ws.ircReadySent = false; // Track if this client has received 'irc-ready'
+	if (ircReady && ws.readyState === ws.OPEN) {
+		ws.send(JSON.stringify({ type: 'irc-ready' }));
+		ws.ircReadySent = true;
+	}
 
 	// Handle messages from WebSocket clients
 	ws.on('message', (raw) => {
@@ -179,8 +187,17 @@ if (IRC_SERVER && IRC_NICK && IRC_CHANNEL) {
 	});
 
 	// When IRC client is registered, join the default channel
+
 	ircClient.on('registered', () => {
 		logger.info(`Connected to IRC server ${IRC_SERVER} as ${IRC_NICK}`);
+		ircReady = true;
+		// Send 'irc-ready' to all connected WebSocket clients that haven't received it
+		wss.clients.forEach((client) => {
+			if (client.readyState === client.OPEN && !client.ircReadySent) {
+				client.send(JSON.stringify({ type: 'irc-ready' }));
+				client.ircReadySent = true;
+			}
+		});
 		ircClient.join(IRC_CHANNEL);
 	});
 

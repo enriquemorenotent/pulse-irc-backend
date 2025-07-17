@@ -28,7 +28,14 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
   ```
 
 
+
 ### Message Types (Server → Client)
+
+- **IRC connection ready**
+  ```json
+  { "type": "irc-ready" }
+  ```
+  Sent once after the backend IRC client is fully connected and ready to accept channel join requests. The frontend should wait for this message before enabling IRC actions.
 
 - **IRC message received**
   ```json
