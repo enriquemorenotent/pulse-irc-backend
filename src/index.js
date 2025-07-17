@@ -6,7 +6,10 @@ const logger = require('./logger');
 
 // Set up Express app for REST endpoints and health checks
 const express = require('express');
+const cors = require('cors');
 const app = express();
+// Enable CORS for all routes (customize origin as needed)
+app.use(cors());
 
 // Health-check route for monitoring server status
 app.get('/health', (req, res) => {
