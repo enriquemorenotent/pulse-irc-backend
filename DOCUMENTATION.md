@@ -7,6 +7,7 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 - **Endpoint:** `ws://<backend-host>:<port>` (default port: 3000)
 - **Protocol:** JSON messages
 
+
 ### Message Types (Client → Server)
 
 - **Join a channel**
@@ -21,6 +22,11 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
   ```json
   { "type": "part", "channel": "#channel" }
   ```
+- **Request nick list for a channel**
+  ```json
+  { "type": "names", "channel": "#channel" }
+  ```
+
 
 ### Message Types (Server → Client)
 
@@ -35,6 +41,10 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 - **User parted a channel**
   ```json
   { "type": "part", "nick": "nick", "channel": "#channel" }
+  ```
+- **Nick list for a channel**
+  ```json
+  { "type": "names", "channel": "#channel", "nicks": ["nick1", "nick2", "nick3"] }
   ```
 - **Error**
   ```json

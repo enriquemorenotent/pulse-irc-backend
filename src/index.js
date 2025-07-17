@@ -85,11 +85,28 @@ wss.on('connection', (ws) => {
 						ircClient.part(msg.channel);
 					}
 					break;
+				case 'names':
+					if (msg.channel) {
+						logger.info(`WS requests IRC names for: ${msg.channel}`);
+						ircClient.raw(`NAMES ${msg.channel}`);
+					}
+					break;
 				default:
 					logger.warn('Unknown WS message type:', msg.type);
 					ws.send(
 						JSON.stringify({ type: 'error', error: 'Unknown message type' })
 					);
+					// Relay IRC channel nick list to WebSocket clients
+					ircClient.on('names', (event) => {
+						logger.info(
+							`IRC names for ${event.channel}: ${Object.keys(event.users).join(', ')}`
+						);
+						broadcastWS({
+							type: 'names',
+							channel: event.channel,
+							nicks: Object.keys(event.users),
+						});
+					});
 			}
 		} catch (err) {
 			logger.error('Error handling WS message:', err);
