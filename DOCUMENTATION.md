@@ -3,6 +3,7 @@
 
 This document describes how to interact with the backend WebSocket IRC bridge for frontend integration. The backend supports multiple independent IRC sessions—one per WebSocket connection—allowing each frontend user to connect to any IRC server with their own nickname.
 
+
 ## Protocol Overview and Connection Flow
 
 1. **Connect to WebSocket:**
@@ -18,6 +19,10 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
    - No other IRC actions are allowed until the backend responds with `{"type": "irc-ready"}`.
 3. **Wait for IRC Ready:**
    - The backend connects to the IRC server and performs the handshake.
+   - If the requested nickname is already in use, the backend will automatically try a new nickname by appending random digits, and will notify the frontend of the new nickname with a message:
+     ```json
+     { "type": "nick", "nick": "<newNick>" }
+     ```
    - Once the IRC connection is fully established, the backend sends:
      ```json
      { "type": "irc-ready" }
@@ -128,6 +133,7 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 
 
 
+
 ### Message Types (Server → Client)
 
 - **IRC connection ready**
@@ -135,6 +141,11 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
   { "type": "irc-ready" }
   ```
   Sent once after the backend IRC client for this WebSocket is fully connected and ready to accept channel join requests. The frontend should wait for this message before enabling IRC actions.
+- **IRC nickname changed by backend**
+  ```json
+  { "type": "nick", "nick": "<newNick>" }
+  ```
+  Sent if the backend changes the IRC nickname due to a collision (e.g., the requested nick is already in use). The frontend should update its state to reflect the new nickname.
 - **IRC message received**
   ```json
   { "type": "message", "from": "nick", "channel": "#channel", "text": "Hello" }
