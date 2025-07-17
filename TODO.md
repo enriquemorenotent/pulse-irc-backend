@@ -8,7 +8,7 @@ Chronological checklist. Mark items with **x** when complete.
 - [x] Environment handling: `dotenv`, add `.env.example`
 - [x] Express baseline: app, health‑check route, error handler
 - [x] WebSocket server: attach `ws`; echo test
-- [ ] IRC bridge: integrate `irc-framework`, connect via env
+- [x] IRC bridge: integrate `irc-framework`, connect via env
 - [ ] Message mapper: WebSocket ⇄ IRC (join, message, part)
 - [ ] JWT auth: `/auth/login`, token sign/verify, WS upgrade guard
 - [ ] Rate limiting: in‑memory or Redis store
