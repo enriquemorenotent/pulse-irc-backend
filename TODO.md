@@ -10,5 +10,3 @@ Chronological checklist. Mark items with **x** when complete.
 - [x] WebSocket server: attach `ws`; echo test
 - [x] IRC bridge: integrate `irc-framework`, connect via env
 - [ ] Message mapper: WebSocket ⇄ IRC (join, message, part)
-- [ ] Rate limiting: in‑memory or Redis store
-- [ ] Release: tag version, push image, deploy to Fly.io/Render
