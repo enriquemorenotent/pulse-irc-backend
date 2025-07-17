@@ -165,13 +165,35 @@ wss.on('connection', (ws) => {
 				);
 			});
 			ircClient.on('names', (event) => {
+				const nicks = event && event.users ? Object.keys(event.users) : [];
 				ws.send(
 					JSON.stringify({
 						type: 'names',
 						channel: event.channel,
-						nicks: Object.keys(event.users),
+						nicks,
 					})
 				);
+			});
+
+			// Fallback: handle raw 353 numeric for NAMES reply if irc-framework does not emit 'names' event
+			ircClient.on('raw', (event) => {
+				if (!event || !event.line) return;
+				// 353 = NAMES reply, format: :server 353 <nick> <symbol> <channel> :nick1 nick2 ...
+				const match = event.line.match(
+					/\s353\s+\S+\s+[@=\*]\s+(#\S+)\s+:([\S ]+)/
+				);
+				if (match) {
+					const channel = match[1];
+					// Remove @ or + prefix from nicks (ops/voice)
+					const nicks = match[2].split(' ').map((n) => n.replace(/^[@+]/, ''));
+					ws.send(
+						JSON.stringify({
+							type: 'names',
+							channel,
+							nicks,
+						})
+					);
+				}
 			});
 			ircClient.connect({
 				host: ircHost,
