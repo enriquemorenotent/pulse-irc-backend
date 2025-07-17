@@ -3,7 +3,7 @@
 Chronological checklist. Mark items with **x** when complete.
 
 - [x] Init repo: `npm init -y`, .gitignore, LICENSE
-- [ ] Project tooling: ESLint, Prettier, nodemon, npm scripts
+- [x] Project tooling: ESLint, Prettier, nodemon, npm scripts
 - [ ] Basic scaffold: `src/index.js`, logger utility
 - [ ] Environment handling: `dotenv`, add `.env.example`
 - [ ] Express baseline: app, health‑check route, error handler
