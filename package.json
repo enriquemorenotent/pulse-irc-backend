@@ -10,7 +10,7 @@
     "dev": "nodemon src/index.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.31.0",
     "eslint": "^9.31.0",
