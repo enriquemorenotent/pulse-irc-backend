@@ -49,7 +49,7 @@ PORT=3000
 ## API
 
 ### WebSocket
-Endpoint: `/ws`
+Endpoint: any path (example: `/ws`)
 
 Example messages:
 ```json
