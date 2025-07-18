@@ -147,10 +147,20 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
   ```
   Sent if the backend changes the IRC nickname due to a collision (e.g., the requested nick is already in use). The frontend should update its state to reflect the new nickname.
 
+
 **IRC message received**
   ```json
   { "type": "message", "from": "nick", "channel": "#channel", "text": "Hello" }
   ```
+
+**Channel topic received**
+  ```json
+  { "type": "topic", "channel": "#channel", "topic": "...", "nick": "nick" }
+  ```
+  - `channel`: The channel name for which the topic applies.
+  - `topic`: The topic string as sent by the IRC server.
+  - `nick`: The nick of the user who set the topic (if available).
+
 **Server-level message (MOTD, notices, numerics, etc.)**
   ```json
   { "type": "server-message", "subtype": "motd|notice|001|002|...", "text": "..." }
