@@ -24,14 +24,6 @@ npm install
 npm run dev
 ```
 
-
-<!--
-### Docker
-```bash
-docker compose up --build
-```
--->
-
 ## Environment
 Copy `.env.example` to `.env` before running:
 
@@ -69,12 +61,6 @@ Example messages:
 <!--
 ### REST
 `POST /auth/login` → `{ "token": "..." }`
--->
-
-
-<!--
-## Deployment
-Push the Docker image to any registry or deploy to Fly.io, Render, or a VPS.
 -->
 
 ## License
