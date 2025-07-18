@@ -41,6 +41,7 @@ Example contents:
 ```
 PORT=3000
 # IRC connection details are supplied by the frontend at runtime.
+# Set IRC_TLS=true to enable TLS by default when the frontend does not specify.
 ```
 
 ## Scripts

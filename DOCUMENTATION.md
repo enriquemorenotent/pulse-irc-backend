@@ -1,8 +1,6 @@
-
 # Backend API Documentation
 
 This document describes how to interact with the backend WebSocket IRC bridge for frontend integration. The backend now supports multiple independent IRC sessions over a single WebSocket connection. Each session is identified by a unique `id` supplied by the frontend.
-
 
 ## Protocol Overview and Connection Flow
 
@@ -10,13 +8,18 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
    - The frontend opens a WebSocket connection to the backend: `ws://<backend-host>:<port>` (default port: 3000). The server accepts connections on any path.
 2. **Send IRC Connect Message:**
    - The frontend must send a message of the form:
+
      ```json
-     { "type": "connect", "id": "server1", "server": "irc.example.net", "nick": "myNick" }
+     { "type": "connect", "id": "server1", "server": "irc.example.net", "nick": "myNick", "tls": true }
      ```
+
      - `server`: IRC server hostname (required)
      - `nick`: IRC nickname (required)
      - `password`: (optional) Password for servers that require authentication
+     - `tls`: (optional) `true` to use TLS, `false` to disable; if omitted the backend uses the `IRC_TLS` environment variable
+
    - No other IRC actions are allowed until the backend responds with `{"type": "irc-ready", "id": "<same id>"}`.
+
 3. **Wait for IRC Ready:**
    - The backend connects to the IRC server and performs the handshake.
    - If the requested nickname is already in use, the backend will automatically try a new nickname by appending random digits, and will notify the frontend of the new nickname with a message:
@@ -30,22 +33,28 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
    - The frontend must wait for this message before sending any channel join or IRC actions.
 4. **IRC Actions:**
    - After receiving `irc-ready`, the frontend can send:
-    - Join a channel:
-      ```json
-      { "type": "join", "id": "<id>", "channel": "#channel" }
-      ```
-     - Send a message:
-      ```json
-      { "type": "message", "id": "<id>", "channel": "#channel", "text": "Hello world" }
-      ```
-     - Part (leave) a channel:
-      ```json
-      { "type": "part", "id": "<id>", "channel": "#channel" }
-      ```
-     - Request nick list:
-      ```json
-      { "type": "names", "id": "<id>", "channel": "#channel" }
-      ```
+   - Join a channel:
+     ```json
+     { "type": "join", "id": "<id>", "channel": "#channel" }
+     ```
+   - Send a message:
+
+   ```json
+   { "type": "message", "id": "<id>", "channel": "#channel", "text": "Hello world" }
+   ```
+
+   - Part (leave) a channel:
+
+   ```json
+   { "type": "part", "id": "<id>", "channel": "#channel" }
+   ```
+
+   - Request nick list:
+
+   ```json
+   { "type": "names", "id": "<id>", "channel": "#channel" }
+   ```
+
    - The backend will relay IRC events and responses as described below.
 
 ## Example Session
@@ -53,12 +62,15 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 1. **Frontend connects to backend WebSocket**
 2. **Frontend sends:**
    ```json
-   { "type": "connect", "id": "libera", "server": "irc.libera.chat", "nick": "alice" }
+   { "type": "connect", "id": "libera", "server": "irc.libera.chat", "nick": "alice", "tls": true }
    ```
+
+````
 3. **Backend responds (after IRC handshake):**
-   ```json
-   { "type": "irc-ready", "id": "libera" }
-   ```
+ ```json
+ { "type": "irc-ready", "id": "libera" }
+````
+
 4. **Frontend sends:**
    ```json
    { "type": "join", "id": "libera", "channel": "#test" }
@@ -98,14 +110,14 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 
 ## WebSocket API
 
- - **Endpoint:** `ws://<backend-host>:<port>` (default port: 3000). The server accepts connections on any path.
+- **Endpoint:** `ws://<backend-host>:<port>` (default port: 3000). The server accepts connections on any path.
 - **Protocol:** JSON messages
 
 ### Message Types (Client → Server)
 
 - **Connect to IRC server**
   ```json
-  { "type": "connect", "id": "example", "server": "irc.example.net", "nick": "myNick" }
+  { "type": "connect", "id": "example", "server": "irc.example.net", "nick": "myNick", "tls": false }
   ```
   (Optionally, add `"password": "..."` for servers that require authentication.)
 - **Join a channel**
@@ -131,11 +143,6 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
   Gracefully closes the IRC connection for the specified session. The server
   will reply with a `disconnected` message once the connection is closed.
 
-
-
-
-
-
 ### Message Types (Server → Client)
 
 - **IRC connection ready**
@@ -149,47 +156,60 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
   ```
   Sent if the backend changes the IRC nickname due to a collision (e.g., the requested nick is already in use). The frontend should update its state to reflect the new nickname.
 
-
 **IRC message received**
-  ```json
-  { "type": "message", "id": "<id>", "from": "nick", "channel": "#channel", "text": "Hello" }
-  ```
+
+```json
+{ "type": "message", "id": "<id>", "from": "nick", "channel": "#channel", "text": "Hello" }
+```
 
 **Channel topic received**
-  ```json
-  { "type": "topic", "id": "<id>", "channel": "#channel", "topic": "...", "nick": "nick" }
-  ```
-  - `channel`: The channel name for which the topic applies.
-  - `topic`: The topic string as sent by the IRC server.
-  - `nick`: The nick of the user who set the topic (if available).
+
+```json
+{ "type": "topic", "id": "<id>", "channel": "#channel", "topic": "...", "nick": "nick" }
+```
+
+- `channel`: The channel name for which the topic applies.
+- `topic`: The topic string as sent by the IRC server.
+- `nick`: The nick of the user who set the topic (if available).
 
 **Server-level message (MOTD, notices, numerics, etc.)**
-  ```json
-  { "type": "server-message", "id": "<id>", "subtype": "motd|notice|001|002|...", "text": "..." }
-  ```
-  - `subtype`: Indicates the kind of server message (e.g., `motd` for Message of the Day, `notice` for server notices, or IRC numeric codes like `001`, `372`, etc.)
-  - `text`: The message content as sent by the IRC server.
+
+```json
+{ "type": "server-message", "id": "<id>", "subtype": "motd|notice|001|002|...", "text": "..." }
+```
+
+- `subtype`: Indicates the kind of server message (e.g., `motd` for Message of the Day, `notice` for server notices, or IRC numeric codes like `001`, `372`, etc.)
+- `text`: The message content as sent by the IRC server.
 
 **User joined a channel**
-  ```json
-  { "type": "join", "id": "<id>", "nick": "nick", "channel": "#channel" }
-  ```
+
+```json
+{ "type": "join", "id": "<id>", "nick": "nick", "channel": "#channel" }
+```
+
 **User parted a channel**
-  ```json
-  { "type": "part", "id": "<id>", "nick": "nick", "channel": "#channel" }
-  ```
+
+```json
+{ "type": "part", "id": "<id>", "nick": "nick", "channel": "#channel" }
+```
+
 **Nick list for a channel**
-  ```json
-  { "type": "names", "id": "<id>", "channel": "#channel", "nicks": ["nick1", "nick2", "nick3"] }
-  ```
+
+```json
+{ "type": "names", "id": "<id>", "channel": "#channel", "nicks": ["nick1", "nick2", "nick3"] }
+```
+
 **IRC connection closed**
-  ```json
-  { "type": "disconnected", "id": "<id>" }
-  ```
+
+```json
+{ "type": "disconnected", "id": "<id>" }
+```
+
 **Error**
-  ```json
-  { "type": "error", "id": "<id>", "error": "Error message" }
-  ```
+
+```json
+{ "type": "error", "id": "<id>", "error": "Error message" }
+```
 
 ## Health Check
 
@@ -199,11 +219,10 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
   { "status": "ok" }
   ```
 
-
-
 ## Environment Variables (Backend)
 
 - `PORT` - Port to run the backend server (default: 3000)
+- `IRC_TLS` - Default TLS setting for IRC connections (`true` or `false`, default `false`). Used when the connect message omits the `tls` field.
 
 IRC connection details are now provided by the frontend per WebSocket connection. The backend no longer uses `IRC_SERVER`, `IRC_NICK`, or `IRC_CHANNEL` environment variables.
 

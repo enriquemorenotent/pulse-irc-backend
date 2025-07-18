@@ -9,4 +9,8 @@ module.exports = defineConfig([
 		files: ['**/*.{js,cjs}'],
 		languageOptions: { globals: { ...globals.browser, ...globals.node } },
 	},
+	{
+		files: ['test/**/*.js'],
+		languageOptions: { globals: { ...globals.jest } },
+	},
 ]);
