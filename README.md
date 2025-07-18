@@ -17,6 +17,7 @@ Features related to authentication, production hardening, deployment, and multi-
 ## Quick start
 
 ### Local
+Requires Node.js 20 or later.
 ```bash
 git clone <repo‑url>
 cd pulse-irc-backend
