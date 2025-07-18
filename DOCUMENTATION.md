@@ -146,23 +146,31 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
   { "type": "nick", "nick": "<newNick>" }
   ```
   Sent if the backend changes the IRC nickname due to a collision (e.g., the requested nick is already in use). The frontend should update its state to reflect the new nickname.
-- **IRC message received**
+
+**IRC message received**
   ```json
   { "type": "message", "from": "nick", "channel": "#channel", "text": "Hello" }
   ```
-- **User joined a channel**
+**Server-level message (MOTD, notices, numerics, etc.)**
+  ```json
+  { "type": "server-message", "subtype": "motd|notice|001|002|...", "text": "..." }
+  ```
+  - `subtype`: Indicates the kind of server message (e.g., `motd` for Message of the Day, `notice` for server notices, or IRC numeric codes like `001`, `372`, etc.)
+  - `text`: The message content as sent by the IRC server.
+
+**User joined a channel**
   ```json
   { "type": "join", "nick": "nick", "channel": "#channel" }
   ```
-- **User parted a channel**
+**User parted a channel**
   ```json
   { "type": "part", "nick": "nick", "channel": "#channel" }
   ```
-- **Nick list for a channel**
+**Nick list for a channel**
   ```json
   { "type": "names", "channel": "#channel", "nicks": ["nick1", "nick2", "nick3"] }
   ```
-- **Error**
+**Error**
   ```json
   { "type": "error", "error": "Error message" }
   ```
@@ -184,9 +192,11 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 IRC connection details are now provided by the frontend per WebSocket connection. The backend no longer uses `IRC_SERVER`, `IRC_NICK`, or `IRC_CHANNEL` environment variables.
 
 ## Notes
+
 - No authentication is required.
 - The backend is intended for local, single-user use.
 - The frontend should handle connection errors and display error messages from the backend.
+- The backend now forwards all server-level messages (MOTD, server notices, numerics, etc.) to the frontend in real time using the `server-message` type. The frontend is responsible for displaying or storing these as needed.
 
 ---
 
