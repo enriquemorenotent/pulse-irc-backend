@@ -33,6 +33,14 @@ docker compose up --build
 -->
 
 ## Environment
+Copy `.env.example` to `.env` before running:
+
+```bash
+cp .env.example .env
+```
+
+Example contents:
+
 ```
 PORT=3000
 # IRC connection details are supplied by the frontend at runtime.
