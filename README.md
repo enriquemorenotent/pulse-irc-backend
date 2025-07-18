@@ -8,7 +8,7 @@ Features related to authentication, production hardening, deployment, and multi-
 
 ## Stack
 - Node.js 20
-- Express 4
+- Express 5
 - irc‑framework
 - ws
 - jsonwebtoken
@@ -20,9 +20,8 @@ Features related to authentication, production hardening, deployment, and multi-
 ### Local
 ```bash
 git clone <repo‑url>
-cd web-irc-backend
+cd pulse-irc-backend
 npm install
-cp .env.example .env
 npm run dev
 ```
 
@@ -37,8 +36,7 @@ docker compose up --build
 ## Environment
 ```
 PORT=3000
-IRC_SERVER=irc.libera.chat
-IRC_NICK=webbot
+# IRC connection details are supplied by the frontend at runtime.
 ```
 
 ## Scripts
