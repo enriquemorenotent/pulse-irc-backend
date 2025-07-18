@@ -1,5 +1,6 @@
 // Load environment variables from .env file
 require('dotenv').config();
+/* global process */
 
 // Simple logger utility
 const logger = require('./logger');
@@ -45,7 +46,7 @@ wss.on('connection', (ws) => {
 	logger.info('WebSocket client connected');
 	wsIrcMap.set(ws, { ircClient: null, ircReady: false });
 
-	ws.on('close', (code, reason) => {
+	ws.on('close', () => {
 		logger.info('WebSocket client disconnected, cleaning up IRC client');
 		const entry = wsIrcMap.get(ws);
 		if (entry && entry.ircClient) {
@@ -235,5 +236,5 @@ wss.on('connection', (ws) => {
 // Start the HTTP/WebSocket server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-	logger.info(`Express & WebSocket server listening on port ${PORT}`);
+        logger.info(`Express & WebSocket server listening on port ${PORT}`);
 });
