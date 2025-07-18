@@ -1,13 +1,14 @@
 const levels = ['error', 'warn', 'info', 'debug'];
 
 function log(level, ...args) {
+  const timestamp = new Date().toISOString();
   if (levels.includes(level)) {
     console[level === 'debug' ? 'log' : level](
-      `[${level.toUpperCase()}]`,
+      `[${timestamp}] [${level.toUpperCase()}]`,
       ...args
     );
   } else {
-    console.log('[LOG]', ...args);
+    console.log(`[${timestamp}] [LOG]`, ...args);
   }
 }
 
