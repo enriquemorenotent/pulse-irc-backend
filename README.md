@@ -13,9 +13,6 @@ Features related to authentication, production hardening, deployment, and multi-
 - Express 5
 - irc‑framework
 - ws
-- jsonwebtoken
-- PostgreSQL (optional)
-- Redis (optional)
 
 ## Quick start
 
