@@ -1,4 +1,5 @@
 // Load environment variables from .env file
+/* global process */
 require('dotenv').config();
 
 // Simple logger utility
@@ -45,7 +46,7 @@ wss.on('connection', (ws) => {
 	logger.info('WebSocket client connected');
 	wsIrcMap.set(ws, { ircClient: null, ircReady: false });
 
-	ws.on('close', (code, reason) => {
+ws.on('close', () => {
 		logger.info('WebSocket client disconnected, cleaning up IRC client');
 		const entry = wsIrcMap.get(ws);
 		if (entry && entry.ircClient) {
@@ -113,9 +114,6 @@ wss.on('connection', (ws) => {
 				ws.send(JSON.stringify({ type: 'error', error: 'IRC connection failed', details: err && err.message }));
 			});
 
-			ircClient.on('raw', (event) => {
-				logger.info('IRC RAW:', event);
-			});
 
 			ircClient.on('nick in use', (event) => {
 				logger.warn('IRC nick in use:', event);
@@ -145,20 +143,33 @@ wss.on('connection', (ws) => {
 			});
 
 			// Forward server notices to frontend
-			ircClient.on('notice', (event) => {
-				if (!event.target || event.target === ircClient.user.nick) {
-					ws.send(JSON.stringify({ type: 'server-message', subtype: 'notice', from: event.nick, text: event.message }));
-				}
-			});
+                        ircClient.on('notice', (event) => {
+                                if (!event.target || event.target === ircClient.user.nick) {
+                                        ws.send(JSON.stringify({ type: 'server-message', subtype: 'notice', from: event.nick, text: event.message }));
+                                }
+                        });
 
-			// Forward raw server numerics (welcome, info, MOTD lines, etc.)
-			ircClient.on('raw', (event) => {
-				if (!event || !event.command) return;
-				const serverNumerics = ['001', '002', '003', '004', '005', '372', '375', '376'];
-				if (serverNumerics.includes(event.command)) {
-					ws.send(JSON.stringify({ type: 'server-message', subtype: event.command, text: event.params && event.params.join(' ') }));
-				}
-			});
+                        // Consolidated raw handler
+                        ircClient.on('raw', (event) => {
+                                logger.info('IRC RAW:', event);
+
+                                if (event && event.command) {
+                                        const serverNumerics = ['001', '002', '003', '004', '005', '372', '375', '376'];
+                                        if (serverNumerics.includes(event.command)) {
+                                                ws.send(JSON.stringify({ type: 'server-message', subtype: event.command, text: event.params && event.params.join(' ') }));
+                                        }
+                                }
+
+                                if (event && event.line) {
+                                        const match = event.line.match(/\s353\s+\S+\s+[@=*]\s+(#\S+)\s+:([\S ]+)/);
+                                        if (match) {
+                                                const channel = match[1];
+                                                const nicks = match[2].split(' ').map((n) => n.replace(/^[@+]/, ''));
+                                                ws.send(JSON.stringify({ type: 'names', channel, nicks }));
+                                        }
+                                }
+                        });
+
 
 			ircClient.on('join', (event) => {
 				ws.send(JSON.stringify({ type: 'join', nick: event.nick, channel: event.channel }));
@@ -173,18 +184,6 @@ wss.on('connection', (ws) => {
 				ws.send(JSON.stringify({ type: 'names', channel: event.channel, nicks }));
 			});
 
-			// Fallback: handle raw 353 numeric for NAMES reply if irc-framework does not emit 'names' event
-			ircClient.on('raw', (event) => {
-				if (!event || !event.line) return;
-				// 353 = NAMES reply, format: :server 353 <nick> <symbol> <channel> :nick1 nick2 ...
-				const match = event.line.match(/\s353\s+\S+\s+[@=*]\s+(#\S+)\s+:([\S ]+)/);
-				if (match) {
-					const channel = match[1];
-					// Remove @ or + prefix from nicks (ops/voice)
-					const nicks = match[2].split(' ').map((n) => n.replace(/^[@+]/, ''));
-					ws.send(JSON.stringify({ type: 'names', channel, nicks }));
-				}
-			});
 			ircClient.connect({ host: ircHost, port: ircPort, nick: msg.nick, password: msg.password, tls: useTLS, auto_reconnect: false });
 			return;
 		}
