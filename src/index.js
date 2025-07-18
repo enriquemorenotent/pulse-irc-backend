@@ -1,4 +1,3 @@
-/* global process */
 // Load environment variables from .env file
 require('dotenv').config();
 
@@ -12,14 +11,14 @@ const app = express();
 app.use(cors());
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+	res.json({ status: 'ok' });
 });
 
 // Centralized error handler for REST endpoints
 /* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
-  logger.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
+	logger.error('Unhandled error:', err);
+	res.status(500).json({ error: 'Internal Server Error' });
 });
 /* eslint-enable no-unused-vars */
 
@@ -28,5 +27,5 @@ setupWebSocketServer(server);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  logger.info(`Express & WebSocket server listening on port ${PORT}`);
+	logger.info(`Express & WebSocket server listening on port ${PORT}`);
 });
