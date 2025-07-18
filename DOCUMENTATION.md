@@ -7,7 +7,7 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 ## Protocol Overview and Connection Flow
 
 1. **Connect to WebSocket:**
-   - The frontend opens a WebSocket connection to the backend: `ws://<backend-host>:<port>` (default port: 3000).
+   - The frontend opens a WebSocket connection to the backend: `ws://<backend-host>:<port>` (default port: 3000). The server accepts connections on any path.
 2. **Send IRC Connect Message:**
    - The frontend must send a message of the form:
      ```json
@@ -98,7 +98,7 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 
 ## WebSocket API
 
-- **Endpoint:** `ws://<backend-host>:<port>` (default port: 3000)
+ - **Endpoint:** `ws://<backend-host>:<port>` (default port: 3000). The server accepts connections on any path.
 - **Protocol:** JSON messages
 
 ### Message Types (Client → Server)
