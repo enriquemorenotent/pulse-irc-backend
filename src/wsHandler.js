@@ -15,14 +15,25 @@ function setupWebSocketServer(server) {
 		logger.info('WebSocket client connected');
                 wsIrcMap.set(ws, { ircSessions: new Map() });
 
-		ws.on('close', () => {
-			logger.info('WebSocket client disconnected, cleaning up IRC client');
+                ws.on('close', () => {
+                        logger.info('WebSocket client disconnected, cleaning up IRC clients');
                         const entry = wsIrcMap.get(ws);
                         if (entry) {
-                                for (const session of entry.ircSessions.values()) {
+                                for (const [id, session] of entry.ircSessions.entries()) {
                                         if (session.ircClient) {
-                                                session.ircClient.quit('WebSocket client disconnected');
+                                                try {
+                                                        session.ircClient.quit('WebSocket client disconnected');
+                                                        session.ircClient.removeAllListeners();
+                                                        if (session.ircClient.connection && session.ircClient.connection.end) {
+                                                                session.ircClient.connection.end();
+                                                        }
+                                                } catch (err) {
+                                                        logger.error('Error cleaning IRC client:', err);
+                                                }
+                                                session.ircClient = null;
+                                                session.ircReady = false;
                                         }
+                                        entry.ircSessions.delete(id);
                                 }
                         }
                         wsIrcMap.delete(ws);
@@ -57,7 +68,13 @@ function setupWebSocketServer(server) {
 
                                 const sessionEntry = { ircClient: null, ircReady: false };
                                 sessions.set(msg.id, sessionEntry);
-                                createIrcClient({ server: msg.server, port: msg.port || 6697, nick: msg.nick, password: msg.password }, ws, sessionEntry, msg.id);
+                                createIrcClient(
+                                        { server: msg.server, port: msg.port || 6697, nick: msg.nick, password: msg.password },
+                                        ws,
+                                        sessionEntry,
+                                        msg.id,
+                                        () => sessions.delete(msg.id)
+                                );
                                 return;
                         }
 
