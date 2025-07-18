@@ -1,13 +1,14 @@
 {
 	"name": "pulse-irc-backend",
 	"version": "1.0.0",
-        "description": "Proxies WebSocket traffic to IRC for local single-user use.",
-	"main": "index.js",
+	"description": "Proxies WebSocket traffic to IRC for local single-user use.",
+	"main": "src/index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"lint": "eslint .",
 		"format": "prettier --write .",
-		"dev": "nodemon src/index.js"
+		"dev": "nodemon src/index.js",
+		"start": "node src/index.js"
 	},
 	"author": "",
 	"license": "MIT",
