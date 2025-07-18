@@ -83,6 +83,10 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
   ```json
   { "type": "error", "id": "<id>", "error": "IRC connection failed" }
   ```
+- If an established IRC connection is lost, the backend sends:
+  ```json
+  { "type": "disconnected", "id": "<id>" }
+  ```
 - If the frontend sends an unknown or malformed message, the backend responds with:
   ```json
   { "type": "error", "error": "Invalid JSON format" }
@@ -171,6 +175,10 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 **Nick list for a channel**
   ```json
   { "type": "names", "id": "<id>", "channel": "#channel", "nicks": ["nick1", "nick2", "nick3"] }
+  ```
+**IRC connection closed**
+  ```json
+  { "type": "disconnected", "id": "<id>" }
   ```
 **Error**
   ```json

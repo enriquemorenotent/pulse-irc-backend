@@ -8,10 +8,29 @@ const logger = require('./logger');
  * @param {Object} entry - Map entry storing client state
  * @returns {IRC.Client}
  */
-function createIrcClient(options, ws, entry, id) {
+function createIrcClient(options, ws, entry, id, onDisconnect) {
   const { server: host, port = 6697, nick, password } = options;
   const ircClient = new IRC.Client();
   entry.ircClient = ircClient;
+
+  function cleanup(reason) {
+    if (entry.ircClient) {
+      try {
+        ircClient.removeAllListeners();
+        ircClient.quit(reason || 'disconnect');
+        if (ircClient.connection && ircClient.connection.end) {
+          ircClient.connection.end();
+        }
+      } catch (err) {
+        logger.error('Error during IRC cleanup:', err);
+      }
+      entry.ircClient = null;
+      entry.ircReady = false;
+      if (typeof onDisconnect === 'function') {
+        onDisconnect();
+      }
+    }
+  }
 
   const useTLS =
     port === 6697 || port === 7000 || port === 7070 || /libera\.chat$/.test(host);
@@ -35,6 +54,18 @@ function createIrcClient(options, ws, entry, id) {
 
   ircClient.on('close', () => {
     logger.warn('IRC client: connection closed');
+    if (ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify({ type: 'disconnected', id }));
+    }
+    cleanup('close');
+  });
+
+  ircClient.on('socket close', () => {
+    logger.warn('IRC client: socket closed');
+    if (ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify({ type: 'disconnected', id }));
+    }
+    cleanup('socket close');
   });
 
   ircClient.on('quit', (event) => {
@@ -46,6 +77,7 @@ function createIrcClient(options, ws, entry, id) {
     ws.send(
       JSON.stringify({ type: 'error', id, error: 'IRC connection failed', details: err && err.message })
     );
+    cleanup('error');
   });
 
   ircClient.on('nick in use', (event) => {
