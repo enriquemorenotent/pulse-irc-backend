@@ -8,7 +8,7 @@ const logger = require('./logger');
  * @param {Object} entry - Map entry storing client state
  * @returns {IRC.Client}
  */
-function createIrcClient(options, ws, entry) {
+function createIrcClient(options, ws, entry, id) {
   const { server: host, port = 6697, nick, password } = options;
   const ircClient = new IRC.Client();
   entry.ircClient = ircClient;
@@ -29,7 +29,7 @@ function createIrcClient(options, ws, entry) {
 
   ircClient.on('registered', () => {
     entry.ircReady = true;
-    ws.send(JSON.stringify({ type: 'irc-ready' }));
+    ws.send(JSON.stringify({ type: 'irc-ready', id }));
     logger.info('Sent irc-ready to WebSocket client after IRC handshake');
   });
 
@@ -44,7 +44,7 @@ function createIrcClient(options, ws, entry) {
   ircClient.on('error', (err) => {
     logger.error('IRC error:', err);
     ws.send(
-      JSON.stringify({ type: 'error', error: 'IRC connection failed', details: err && err.message })
+      JSON.stringify({ type: 'error', id, error: 'IRC connection failed', details: err && err.message })
     );
   });
 
@@ -52,7 +52,7 @@ function createIrcClient(options, ws, entry) {
     logger.warn('IRC nick in use:', event);
     const newNick = `${event.nick}${Math.floor(1000 + Math.random() * 9000)}`;
     logger.info(`Trying new IRC nick: ${newNick}`);
-    ws.send(JSON.stringify({ type: 'nick', nick: newNick }));
+    ws.send(JSON.stringify({ type: 'nick', id, nick: newNick }));
     ircClient.changeNick(newNick);
   });
 
@@ -62,24 +62,24 @@ function createIrcClient(options, ws, entry) {
 
   ircClient.on('message', (event) => {
     ws.send(
-      JSON.stringify({ type: 'message', from: event.nick, channel: event.target, text: event.message })
+      JSON.stringify({ type: 'message', id, from: event.nick, channel: event.target, text: event.message })
     );
   });
 
   ircClient.on('motd', (event) => {
-    ws.send(JSON.stringify({ type: 'server-message', subtype: 'motd', text: event.motd }));
+    ws.send(JSON.stringify({ type: 'server-message', id, subtype: 'motd', text: event.motd }));
   });
 
   ircClient.on('topic', (event) => {
     ws.send(
-      JSON.stringify({ type: 'topic', channel: event.channel, topic: event.topic, nick: event.nick })
+      JSON.stringify({ type: 'topic', id, channel: event.channel, topic: event.topic, nick: event.nick })
     );
   });
 
   ircClient.on('notice', (event) => {
     if (!event.target || event.target === ircClient.user.nick) {
       ws.send(
-        JSON.stringify({ type: 'server-message', subtype: 'notice', from: event.nick, text: event.message })
+        JSON.stringify({ type: 'server-message', id, subtype: 'notice', from: event.nick, text: event.message })
       );
     }
   });
@@ -93,6 +93,7 @@ function createIrcClient(options, ws, entry) {
         ws.send(
           JSON.stringify({
             type: 'server-message',
+            id,
             subtype: event.command,
             text: event.params && event.params.join(' '),
           })
@@ -105,22 +106,22 @@ function createIrcClient(options, ws, entry) {
       if (match) {
         const channel = match[1];
         const nicks = match[2].split(' ').map((n) => n.replace(/^[@+]/, ''));
-        ws.send(JSON.stringify({ type: 'names', channel, nicks }));
+        ws.send(JSON.stringify({ type: 'names', id, channel, nicks }));
       }
     }
   });
 
   ircClient.on('join', (event) => {
-    ws.send(JSON.stringify({ type: 'join', nick: event.nick, channel: event.channel }));
+    ws.send(JSON.stringify({ type: 'join', id, nick: event.nick, channel: event.channel }));
   });
 
   ircClient.on('part', (event) => {
-    ws.send(JSON.stringify({ type: 'part', nick: event.nick, channel: event.channel }));
+    ws.send(JSON.stringify({ type: 'part', id, nick: event.nick, channel: event.channel }));
   });
 
   ircClient.on('names', (event) => {
     const nicks = event && event.users ? Object.keys(event.users) : [];
-    ws.send(JSON.stringify({ type: 'names', channel: event.channel, nicks }));
+    ws.send(JSON.stringify({ type: 'names', id, channel: event.channel, nicks }));
   });
 
   ircClient.connect({ host, port, nick, password, tls: useTLS, auto_reconnect: false });
