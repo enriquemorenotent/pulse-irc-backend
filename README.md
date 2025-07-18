@@ -42,6 +42,8 @@ PORT=3000
 - `npm run dev` – dev with nodemon
 - `npm start` – prod
 - `npm test` – tests
+- `npm run lint` – ESLint
+- `npm run format` – Prettier
 
 ## API
 
@@ -69,3 +71,6 @@ Push the Docker image to any registry or deploy to Fly.io, Render, or a VPS.
 
 ## License
 MIT
+
+## Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines including linting and formatting.
