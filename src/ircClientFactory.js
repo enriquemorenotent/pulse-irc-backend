@@ -13,7 +13,7 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
   const ircClient = new IRC.Client();
   entry.ircClient = ircClient;
 
-  function cleanup(reason) {
+  function cleanup(reason, notify = true) {
     if (entry.ircClient) {
       try {
         ircClient.removeAllListeners();
@@ -26,6 +26,9 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
       }
       entry.ircClient = null;
       entry.ircReady = false;
+      if (notify && ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify({ type: 'disconnected', id }));
+      }
       if (typeof onDisconnect === 'function') {
         onDisconnect();
       }
@@ -57,7 +60,7 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
     if (ws.readyState === ws.OPEN) {
       ws.send(JSON.stringify({ type: 'disconnected', id }));
     }
-    cleanup('close');
+    cleanup('close', false);
   });
 
   ircClient.on('socket close', () => {
@@ -65,7 +68,7 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
     if (ws.readyState === ws.OPEN) {
       ws.send(JSON.stringify({ type: 'disconnected', id }));
     }
-    cleanup('socket close');
+    cleanup('socket close', false);
   });
 
   ircClient.on('quit', (event) => {
@@ -77,7 +80,7 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
     ws.send(
       JSON.stringify({ type: 'error', id, error: 'IRC connection failed', details: err && err.message })
     );
-    cleanup('error');
+    cleanup('error', false);
   });
 
   ircClient.on('nick in use', (event) => {
@@ -157,6 +160,9 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
   });
 
   ircClient.connect({ host, port, nick, password, tls: useTLS, auto_reconnect: false });
+
+  // expose disconnect helper for manual cleanup
+  ircClient.disconnect = cleanup;
 
   return ircClient;
 }
