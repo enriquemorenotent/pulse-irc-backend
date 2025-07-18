@@ -1,7 +1,7 @@
 {
 	"name": "pulse-irc-backend",
 	"version": "1.0.0",
-	"description": "## Overview Node.js gateway that maps browser WebSocket traffic to IRC, handles JWT auth, and exposes optional REST endpoints.",
+        "description": "Proxies WebSocket traffic to IRC for local single-user use.",
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
