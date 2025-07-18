@@ -84,4 +84,5 @@ MIT
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines including linting and formatting.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+Before committing, run `npm run format` to ensure code is consistently styled.

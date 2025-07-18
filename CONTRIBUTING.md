@@ -13,16 +13,22 @@ Thank you for wanting to contribute! This project is intended for personal use b
    ```
 
 ## Linting
+
 Run ESLint over the project:
+
 ```bash
 npm run lint
 ```
+
 Fix any reported issues before opening a pull request.
 
 ## Formatting
+
 Format source files with Prettier:
+
 ```bash
 npm run format
 ```
 
-Please run the linter and formatter before submitting changes.
+Run `npm run format` before committing to ensure files are properly formatted.
+Running the linter is also recommended before opening a pull request.
