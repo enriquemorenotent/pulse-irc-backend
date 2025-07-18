@@ -68,4 +68,4 @@ Push the Docker image to any registry or deploy to Fly.io, Render, or a VPS.
 -->
 
 ## License
-ISC
+MIT
