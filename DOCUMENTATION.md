@@ -124,6 +124,12 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
   ```json
   { "type": "names", "id": "example", "channel": "#channel" }
   ```
+- **Disconnect an IRC session**
+  ```json
+  { "type": "disconnect", "id": "example" }
+  ```
+  Gracefully closes the IRC connection for the specified session. The server
+  will reply with a `disconnected` message once the connection is closed.
 
 
 

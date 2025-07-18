@@ -19,21 +19,14 @@ function setupWebSocketServer(server) {
                         logger.info('WebSocket client disconnected, cleaning up IRC clients');
                         const entry = wsIrcMap.get(ws);
                         if (entry) {
-                                for (const [id, session] of entry.ircSessions.entries()) {
+                                for (const session of entry.ircSessions.values()) {
                                         if (session.ircClient) {
                                                 try {
-                                                        session.ircClient.quit('WebSocket client disconnected');
-                                                        session.ircClient.removeAllListeners();
-                                                        if (session.ircClient.connection && session.ircClient.connection.end) {
-                                                                session.ircClient.connection.end();
-                                                        }
+                                                        session.ircClient.disconnect('WebSocket client disconnected', false);
                                                 } catch (err) {
                                                         logger.error('Error cleaning IRC client:', err);
                                                 }
-                                                session.ircClient = null;
-                                                session.ircReady = false;
                                         }
-                                        entry.ircSessions.delete(id);
                                 }
                         }
                         wsIrcMap.delete(ws);
@@ -110,16 +103,20 @@ function setupWebSocketServer(server) {
                                                         session.ircClient.part(msg.channel);
                                                 }
                                                 break;
-                                        case 'names':
-                                                if (msg.channel) {
-                                                        logger.info(`WS requests IRC names for: ${msg.channel}`);
-                                                        session.ircClient.raw(`NAMES ${msg.channel}`);
-                                                }
-                                                break;
-					default:
-						logger.warn('Unknown WS message type:', msg.type);
-						ws.send(JSON.stringify({ type: 'error', error: 'Unknown message type' }));
-				}
+                                       case 'names':
+                                               if (msg.channel) {
+                                                       logger.info(`WS requests IRC names for: ${msg.channel}`);
+                                                       session.ircClient.raw(`NAMES ${msg.channel}`);
+                                               }
+                                               break;
+                                       case 'disconnect':
+                                               logger.info(`WS requests IRC disconnect for session ${msg.id}`);
+                                               session.ircClient.disconnect('Client requested disconnect');
+                                               break;
+                                       default:
+                                               logger.warn('Unknown WS message type:', msg.type);
+                                               ws.send(JSON.stringify({ type: 'error', error: 'Unknown message type' }));
+                               }
 			} catch (err) {
 				logger.error('Error handling WS message:', err);
 				ws.send(JSON.stringify({ type: 'error', error: 'Internal server error' }));
