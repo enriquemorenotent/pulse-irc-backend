@@ -68,10 +68,13 @@ Endpoint: any path (example: `/ws`)
 Example messages:
 
 ```json
-{ "type": "connect", "id": "server1", "server": "irc.example.net", "nick": "myNick" }
+{ "type": "connect", "id": "server1", "server": "irc.example.net", "nick": "myNick", "tls": true }
 { "type": "join", "id": "server1", "channel": "#chat" }
 { "type": "message", "id": "server1", "channel": "#chat", "text": "Hello" }
 ```
+Use `"tls": true` to force a secure connection. If omitted, TLS is automatically
+enabled for standard secure ports (6697, 7000, 7070) and servers ending with
+`libera.chat`.
 
 <!--
 ### REST
