@@ -11,11 +11,12 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 2. **Send IRC Connect Message:**
    - The frontend must send a message of the form:
      ```json
-     { "type": "connect", "id": "server1", "server": "irc.example.net", "nick": "myNick" }
+     { "type": "connect", "id": "server1", "server": "irc.example.net", "nick": "myNick", "tls": true }
      ```
      - `server`: IRC server hostname (required)
      - `nick`: IRC nickname (required)
      - `password`: (optional) Password for servers that require authentication
+     - `tls`: (optional) `true` or `false` to explicitly enable or disable TLS
    - No other IRC actions are allowed until the backend responds with `{"type": "irc-ready", "id": "<same id>"}`.
 3. **Wait for IRC Ready:**
    - The backend connects to the IRC server and performs the handshake.
@@ -53,7 +54,7 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 1. **Frontend connects to backend WebSocket**
 2. **Frontend sends:**
    ```json
-   { "type": "connect", "id": "libera", "server": "irc.libera.chat", "nick": "alice" }
+   { "type": "connect", "id": "libera", "server": "irc.libera.chat", "nick": "alice", "tls": true }
    ```
 3. **Backend responds (after IRC handshake):**
    ```json
@@ -105,9 +106,9 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 
 - **Connect to IRC server**
   ```json
-  { "type": "connect", "id": "example", "server": "irc.example.net", "nick": "myNick" }
+  { "type": "connect", "id": "example", "server": "irc.example.net", "nick": "myNick", "tls": true }
   ```
-  (Optionally, add `"password": "..."` for servers that require authentication.)
+  (Optionally, add `"password": "..."` for servers that require authentication. Use `"tls"` to explicitly enable or disable TLS.)
 - **Join a channel**
   ```json
   { "type": "join", "id": "example", "channel": "#channel" }

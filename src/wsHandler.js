@@ -62,7 +62,13 @@ function setupWebSocketServer(server) {
                                 const sessionEntry = { ircClient: null, ircReady: false };
                                 sessions.set(msg.id, sessionEntry);
                                 createIrcClient(
-                                        { server: msg.server, port: msg.port || 6697, nick: msg.nick, password: msg.password },
+                                        {
+                                                server: msg.server,
+                                                port: msg.port || 6697,
+                                                nick: msg.nick,
+                                                password: msg.password,
+                                                tls: msg.tls,
+                                        },
                                         ws,
                                         sessionEntry,
                                         msg.id,

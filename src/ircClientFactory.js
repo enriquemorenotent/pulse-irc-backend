@@ -4,12 +4,17 @@ const logger = require('./logger');
 /**
  * Create and connect an IRC client, wiring events to the given WebSocket.
  * @param {Object} options - IRC connection options
+ * @param {string} options.server - IRC server hostname
+ * @param {number} [options.port=6697] - IRC server port
+ * @param {string} options.nick - IRC nickname
+ * @param {string} [options.password] - optional server password
+ * @param {boolean} [options.tls] - explicitly enable or disable TLS
  * @param {import('ws')} ws - WebSocket to relay IRC events to
  * @param {Object} entry - Map entry storing client state
  * @returns {IRC.Client}
  */
 function createIrcClient(options, ws, entry, id, onDisconnect) {
-  const { server: host, port = 6697, nick, password } = options;
+  const { server: host, port = 6697, nick, password, tls } = options;
   const ircClient = new IRC.Client();
   entry.ircClient = ircClient;
 
@@ -36,7 +41,12 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
   }
 
   const useTLS =
-    port === 6697 || port === 7000 || port === 7070 || /libera\.chat$/.test(host);
+    typeof tls === 'boolean'
+      ? tls
+      : port === 6697 ||
+        port === 7000 ||
+        port === 7070 ||
+        /libera\.chat$/.test(host);
   logger.info(
     `Connecting to IRC for ws: server=${host}, port=${port}, nick=${nick}, tls=${useTLS}`
   );
