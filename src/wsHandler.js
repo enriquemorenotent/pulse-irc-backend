@@ -68,6 +68,7 @@ function setupWebSocketServer(server) {
                                                 nick: msg.nick,
                                                 password: msg.password,
                                                 tls: msg.tls,
+                                                encoding: msg.encoding,
                                         },
                                         ws,
                                         sessionEntry,
@@ -103,21 +104,60 @@ function setupWebSocketServer(server) {
                                                         session.ircClient.say(msg.channel, msg.text);
                                                 }
                                                 break;
-                                        case 'part':
-                                                if (msg.channel) {
-                                                        logger.info(`WS requests IRC part: ${msg.channel}`);
-                                                        session.ircClient.part(msg.channel);
-                                                }
-                                                break;
+                                       case 'part':
+                                               if (msg.channel) {
+                                                       logger.info(`WS requests IRC part: ${msg.channel}`);
+                                                       session.ircClient.part(msg.channel);
+                                               }
+                                               break;
+                                       case 'whois':
+                                               if (msg.target) {
+                                                       logger.info(`WS requests WHOIS for: ${msg.target}`);
+                                                       try {
+                                                               session.ircClient.whois(msg.target);
+                                                       } catch (e) {
+                                                               logger.error('Error issuing WHOIS:', e);
+                                                       }
+                                               } else {
+                                                       ws.send(JSON.stringify({ type: 'error', error: 'Missing whois target' }));
+                                               }
+                                               break;
                                        case 'names':
                                                if (msg.channel) {
                                                        logger.info(`WS requests IRC names for: ${msg.channel}`);
                                                        session.ircClient.raw(`NAMES ${msg.channel}`);
                                                }
                                                break;
+                                       case 'list':
+                                               try {
+                                                       if (msg.mask) {
+                                                               logger.info(`WS requests IRC LIST with mask: ${msg.mask}`);
+                                                               session.ircClient.list(msg.mask);
+                                                       } else {
+                                                               logger.info('WS requests IRC LIST (no mask)');
+                                                               session.ircClient.list();
+                                                       }
+                                               } catch (e) {
+                                                       logger.error('Error issuing LIST:', e);
+                                                       ws.send(JSON.stringify({ type: 'error', error: 'Failed to request LIST' }));
+                                               }
+                                               break;
                                        case 'disconnect':
                                                logger.info(`WS requests IRC disconnect for session ${msg.id}`);
                                                session.ircClient.disconnect('Client requested disconnect');
+                                               break;
+                                       case 'nick':
+                                               if (msg.nick) {
+                                                       logger.info(`WS requests nick change to: ${msg.nick}`);
+                                                       try {
+                                                               session.ircClient.changeNick(msg.nick);
+                                                       } catch (e) {
+                                                               logger.error('Error changing nick:', e);
+                                                               ws.send(JSON.stringify({ type: 'error', error: 'Failed to change nick' }));
+                                                       }
+                                               } else {
+                                                       ws.send(JSON.stringify({ type: 'error', error: 'Missing nick' }));
+                                               }
                                                break;
                                        default:
                                                logger.warn('Unknown WS message type:', msg.type);

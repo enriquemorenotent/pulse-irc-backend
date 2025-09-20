@@ -9,12 +9,13 @@ const logger = require('./logger');
  * @param {string} options.nick - IRC nickname
  * @param {string} [options.password] - optional server password
  * @param {boolean} [options.tls] - explicitly enable or disable TLS
+ * @param {string} [options.encoding] - optional IRC encoding (e.g. 'utf8')
  * @param {import('ws')} ws - WebSocket to relay IRC events to
  * @param {Object} entry - Map entry storing client state
  * @returns {IRC.Client}
  */
 function createIrcClient(options, ws, entry, id, onDisconnect) {
-  const { server: host, port = 6697, nick, password, tls } = options;
+  const { server: host, port = 6697, nick, password, tls, encoding } = options;
   const ircClient = new IRC.Client();
   entry.ircClient = ircClient;
 
@@ -62,7 +63,22 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
   ircClient.on('registered', () => {
     entry.ircReady = true;
     ws.send(JSON.stringify({ type: 'irc-ready', id }));
+    // Surface the actual nick in use so the UI can display it immediately
+    try {
+      const currentNick = ircClient.user && ircClient.user.nick ? ircClient.user.nick : null;
+      if (currentNick) {
+        ws.send(JSON.stringify({ type: 'nick', id, nick: currentNick }));
+      }
+    } catch {}
     logger.info('Sent irc-ready to WebSocket client after IRC handshake');
+  });
+
+  // Notify UI when our nick changes
+  ircClient.on('nick', (event) => {
+    try {
+      const newNick = event && (event.new_nick || event.nick);
+      if (newNick) ws.send(JSON.stringify({ type: 'nick', id, nick: newNick }));
+    } catch {}
   });
 
   ircClient.on('close', () => {
@@ -129,11 +145,20 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
     }
   });
 
+  // Forward WHOIS responses to the UI
+  ircClient.on('whois', (info) => {
+    try {
+      ws.send(JSON.stringify({ type: 'whois', id, info }));
+    } catch (e) {
+      logger.error('Error forwarding WHOIS:', e);
+    }
+  });
+
   ircClient.on('raw', (event) => {
     logger.info('IRC RAW:', event);
 
     if (event && event.command) {
-      const serverNumerics = ['001', '002', '003', '004', '005', '372', '375', '376'];
+      const serverNumerics = ['001', '002', '003', '004', '005', '372', '375', '376', '401', '432', '433', '437'];
       if (serverNumerics.includes(event.command)) {
         ws.send(
           JSON.stringify({
@@ -154,6 +179,23 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
         ws.send(JSON.stringify({ type: 'names', id, channel, nicks }));
       }
     }
+
+    if (event && event.command === '470' && Array.isArray(event.params) && event.params.length >= 3) {
+      const [, from, to] = event.params;
+      try {
+        ws.send(
+          JSON.stringify({
+            type: 'channel-redirect',
+            id,
+            from,
+            to,
+            reason: event.params[3],
+          })
+        );
+      } catch (err) {
+        logger.error('Error forwarding channel redirect numeric:', err);
+      }
+    }
   });
 
   ircClient.on('join', (event) => {
@@ -164,12 +206,45 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
     ws.send(JSON.stringify({ type: 'part', id, nick: event.nick, channel: event.channel }));
   });
 
+  ircClient.on('userlist', (event) => {
+    try {
+      const nicks = Array.isArray(event?.users) ? event.users.map((u) => u.nick).filter(Boolean) : [];
+      ws.send(JSON.stringify({ type: 'names', id, channel: event.channel, nicks }));
+    } catch (err) {
+      logger.error('Error forwarding userlist:', err);
+    }
+  });
+
   ircClient.on('names', (event) => {
     const nicks = event && event.users ? Object.keys(event.users) : [];
     ws.send(JSON.stringify({ type: 'names', id, channel: event.channel, nicks }));
   });
 
-  ircClient.connect({ host, port, nick, password, tls: useTLS, auto_reconnect: false });
+  ircClient.on('channel redirect', (event) => {
+    try {
+      if (!event?.from || !event?.to) return;
+      ws.send(JSON.stringify({ type: 'channel-redirect', id, from: event.from, to: event.to }));
+    } catch (err) {
+      logger.error('Error forwarding channel redirect:', err);
+    }
+  });
+
+  // Channel LIST streaming
+  ircClient.on('channel list start', () => {
+    ws.send(JSON.stringify({ type: 'list-start', id }));
+  });
+  ircClient.on('channel list', (channels) => {
+    try {
+      ws.send(JSON.stringify({ type: 'list-chunk', id, channels }));
+    } catch (e) {
+      logger.error('Error forwarding list chunk:', e);
+    }
+  });
+  ircClient.on('channel list end', () => {
+    ws.send(JSON.stringify({ type: 'list-end', id }));
+  });
+
+  ircClient.connect({ host, port, nick, password, tls: useTLS, auto_reconnect: false, encoding });
 
   // expose disconnect helper for manual cleanup
   ircClient.disconnect = cleanup;
