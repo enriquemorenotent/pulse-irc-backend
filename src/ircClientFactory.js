@@ -69,7 +69,9 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
       if (currentNick) {
         ws.send(JSON.stringify({ type: 'nick', id, nick: currentNick }));
       }
-    } catch {}
+    } catch (err) {
+      logger.debug('Failed to send initial nick to WebSocket client', err);
+    }
     logger.info('Sent irc-ready to WebSocket client after IRC handshake');
   });
 
@@ -78,7 +80,9 @@ function createIrcClient(options, ws, entry, id, onDisconnect) {
     try {
       const newNick = event && (event.new_nick || event.nick);
       if (newNick) ws.send(JSON.stringify({ type: 'nick', id, nick: newNick }));
-    } catch {}
+    } catch (err) {
+      logger.debug('Failed to forward nick change to WebSocket client', err);
+    }
   });
 
   ircClient.on('close', () => {

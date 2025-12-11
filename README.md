@@ -39,7 +39,7 @@ cp .env.example .env
 Example contents:
 
 ```
-PORT=3000
+PORT=38100
 # IRC connection details are supplied by the frontend at runtime.
 ```
 

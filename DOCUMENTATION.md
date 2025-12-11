@@ -7,7 +7,7 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 ## Protocol Overview and Connection Flow
 
 1. **Connect to WebSocket:**
-   - The frontend opens a WebSocket connection to the backend: `ws://<backend-host>:<port>` (default port: 3000). The server accepts connections on any path.
+   - The frontend opens a WebSocket connection to the backend: `ws://<backend-host>:<port>` (default port: 38100). The server accepts connections on any path.
 2. **Send IRC Connect Message:**
    - The frontend must send a message of the form:
      ```json
@@ -99,7 +99,7 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 
 ## WebSocket API
 
- - **Endpoint:** `ws://<backend-host>:<port>` (default port: 3000). The server accepts connections on any path.
+ - **Endpoint:** `ws://<backend-host>:<port>` (default port: 38100). The server accepts connections on any path.
 - **Protocol:** JSON messages
 
 ### Message Types (Client → Server)
@@ -204,7 +204,7 @@ This document describes how to interact with the backend WebSocket IRC bridge fo
 
 ## Environment Variables (Backend)
 
-- `PORT` - Port to run the backend server (default: 3000)
+- `PORT` - Port to run the backend server (default: 38100)
 
 IRC connection details are now provided by the frontend per WebSocket connection. The backend no longer uses `IRC_SERVER`, `IRC_NICK`, or `IRC_CHANNEL` environment variables.
 
